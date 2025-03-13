@@ -7,4 +7,6 @@
   - animal age, outcome type 
   - intake condition, outcome type
   - adoption rate for given breed
+- size, outcome subtype
+- sex, intake subtype, outcome type
 
