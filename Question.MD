@@ -9,6 +9,7 @@
   - size
   - sex (spayed female & neutered male) --> sani..
   - Date of arrival relations, Date of leaving relation ( return vs not return to owner)
+  - do lighter colors get noticed more? is there is a connection with size?
   - How does length of stay impact the likelihood of return to owner?
   - Does return to owner depend on the time of year(summer vs winter)?
   - Are younger animals more likely to be returned?
