@@ -9,5 +9,5 @@
   - size
   - sex (spayed female & neutered male) --> sani..
   - Date of arrival relations, Date of leaving relation ( return vs not return to owner)
-  - 
+  - do lighter colors get noticed more? is there is a connection with size?
 
