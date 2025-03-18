@@ -1,7 +1,7 @@
 ### QUESTIONS
 
 - What factors influence duration of stay
-  - animal type (dog, cat) 
+  - animal type (dog, cat) // maybe take a look at other species 
   - breed
   - Age --> Variable: Date Of Birth
       - need a function to calc age (03/01/2025 - Date Of Birth)
