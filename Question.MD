@@ -1,10 +1,11 @@
 ### QUESTIONS
 
 - What factors influence duration of stay
-  - animal type (dog, cat)
+  - animal type (dog, cat) 
   - breed
-  - animal age
-  - intake condition of
+  - Age --> Variable: Date Of Birth
+      - need a function to calc age (03/01/2025 - Date Of Birth)
+  - Variable: Intake Condition
   - size
   - sex (spayed female & neutered male) --> sani..
   - Date of arrival relations, Date of leaving relation 
