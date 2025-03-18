@@ -22,7 +22,9 @@
 
 # %% [markdown] id="dd9d8a1b"
 # ## Introduction
-# The Sonoma Animal Shelter dataset comprises 29,012 records detailing various attributes of animals admitted to the shelter, including demographic information, color descriptors, intake and outcome dates, and outcome types such as adoption or return to owner. This analysis seeks to answer two key questions: first, how does the number of days an animal spends in the shelter differ between those that are adopted and those that are returned to their owners; and second, is there an association between an animal's primary coat color—extracted from compound color entries—and its outcome or duration of shelter stay.
+# The Sonoma Animal Shelter dataset, provided by the County of Sonoma Department of Health Services, comprises about 30,000 records detailing various attributes of animals admitted to the shelter. Each record includes species, breed, age, sex, and color, along with intake and outcome types to track the animals journey in the shelter. With over 4,000 animals entering the shelter annually, the dataset offers insights into adoption trends, shelter capacity, and animal welfare efforts. It gets updated regularly with the most recent being March 18, 2025.
+#
+# This analysis seeks to answer two key questions: first, how does the number of days an animal spends in the shelter differ between those that are adopted and those that are returned to their owners; and second, is there an association between an animal's primary coat color—extracted from compound color entries—and its outcome or duration of shelter stay.
 #
 # note: This is tentative and we will likely hone down our scope of questionings(likely to colors)
 #
