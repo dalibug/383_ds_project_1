@@ -1,17 +1,19 @@
 ### QUESTIONS
 
-
 - What affects duration of stay?
+- What factors influence duration of stay
   - animal type (dog, cat)
   - breed
   - animal age
-  - intake condition of.... return vs not return to owner
+  - intake condition of
   - size
   - sex (spayed female & neutered male) --> sani..
-  - Date of arrival relations, Date of leaving relation ( return vs not return to owner)
+  - Date of arrival relations, Date of leaving relation 
   - do lighter colors get noticed more? is there is a connection with size?
-  - How does length of stay impact the likelihood of return to owner?
-  - Does return to owner depend on the time of year(summer vs winter)?
-  - Are younger animals more likely to be returned?
-  - Does size impact return to owner rates?
 
+- Is there a correlation between age and duration?
+- Does shelter capacity affect duration of stay?
+- Does the time of year affect the duration of stay?
+- Are larger dogs more likely to stay longer?
+- Does the length of stay correlate with the outcome? (Euthanized)
+- Do health conditions increase or decrease the length of stay?
