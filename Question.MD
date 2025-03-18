@@ -27,7 +27,10 @@
     - columns needed: "Outcome Type", "Length of Stay"
     - Barplot
     - seems like clean categories 
-      
+
+
+
+------------- Extra Questions --------------------
   - Variable: Intake Condition
   - Length of stay. 
     - Variables: Intake Date, Outcome Date
