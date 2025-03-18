@@ -6,7 +6,7 @@
   - Age --> Variable: Date Of Birth
       - need a function to calc age (03/01/2025 - Date Of Birth)
   - Variable: Intake Condition
-  - size
+  - Variable: Size
   - sex (spayed female & neutered male) --> sani..
   - Date of arrival relations, Date of leaving relation 
   - do lighter colors get noticed more? is there is a connection with size?
