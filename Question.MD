@@ -8,8 +8,10 @@
   - Variable: Intake Condition
   - Variable: Size
   - sex (spayed female & neutered male) --> sani..
-  - Date of arrival relations, Date of leaving relation 
+  - Length of stay. 
+    - Variables: Intake Date, Outcome Date
   - do lighter colors get noticed more? is there is a connection with size?
+    - Variable: Color, Size
 
 - Is there a correlation between age and duration?
 - Does shelter capacity affect duration of stay?
