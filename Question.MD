@@ -1,7 +1,7 @@
 ### QUESTIONS
 
 
-- What factors influence outcome type (return to owner)
+- What affects duration of stay?
   - animal type (dog, cat)
   - breed
   - animal age
