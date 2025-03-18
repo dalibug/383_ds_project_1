@@ -1,6 +1,5 @@
 ### QUESTIONS
 
-- What affects duration of stay?
 - What factors influence duration of stay
   - animal type (dog, cat)
   - breed
