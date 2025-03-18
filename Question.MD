@@ -1,7 +1,9 @@
 ### QUESTIONS
 
 - What factors influence duration of stay
-  - animal type (dog, cat) // maybe take a look at other species 
+  - animal type (dog, cat)
+  -- columns needed: "Days in Shelter" , "type"
+  -- multi-Boxplot for each animal type
   - breed
   - Age --> Variable: Date Of Birth
       - need a function to calc age (03/01/2025 - Date Of Birth)
