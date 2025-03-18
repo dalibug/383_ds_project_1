@@ -1,23 +1,40 @@
 ### QUESTIONS
 
 - What factors influence duration of stay
-  - animal type (dog, cat)
+  - #Animal type (dog, cat) --> DALIA
     - columns needed: "Days in Shelter" , "type"
     - multi-Boxplot for each animal type
-  - breed
-  - Age --> Variable: Date Of Birth
-      - need a function to calc age (03/01/2025 - Date Of Birth)
+  - #Breed --> 1 for cat and one 1 for dog --> RAF
+    - columns needed: "Days in Shelter" - "breed", "type"
+    - multi Barplot, one bar for each breed
+    - Create function to get single breed, maybe.
+  - #Age RAF
+    - columns needed: "Days in Shelter", "DOB", current date(not a column name!)
+    - Scatter plot
+    - Cleanup data(unkown DOB), maybe have to put ages in buckets and use barplot instead of scatterplot?
+
+  - #Size (should we spearate species?) separate by age(isPuppy, isKitten)? GABE
+    - columns needed: "Days in Shelter", "Size" - kitten/puppy or not?
+    - Violin or figure it out
+    - might have to create new columns - isKitten/isPuppy
+
+  - #Sex (spayed female & neutered male) --> DALIA
+    - columns needed: "Days in Shelter", "sex"
+    - create column for 'sex_binary'
+    
+
+  - #Outcome - "how much does each outcome stay?" --> GABE
+    - columns needed: "Outcome Type", "Length of Stay"
+    - Barplot
+    - seems like clean categories 
+      
   - Variable: Intake Condition
-  - Variable: Size
-  - sex (spayed female & neutered male) --> sani..
   - Length of stay. 
     - Variables: Intake Date, Outcome Date
+
   - do lighter colors get noticed more? is there is a connection with size?
     - Variable: Color, Size
 
 - Is there a correlation between age and duration?
-- Does shelter capacity affect duration of stay?
 - Does the time of year affect the duration of stay?
-- Are larger dogs more likely to stay longer?
-- Does the length of stay correlate with the outcome? (Euthanized)
 - Do health conditions increase or decrease the length of stay?
