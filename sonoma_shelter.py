@@ -8,9 +8,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: Python [conda env:anaconda3]
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-env-anaconda3-py
+#     name: python3
 # ---
 
 # %% [markdown] id="aab1aa45"
@@ -18,7 +18,7 @@
 # 03/15/2024
 
 # %% [markdown] id="8d17ef9f"
-# #### Rafael L.S Reis, Dalia Cabrera Hurtado, Gabe Myers
+# #### Rafael L.S. Reis, Dalia Cabrera Hurtado, Gabe Myers
 
 # %% [markdown] id="dd9d8a1b"
 # ## Introduction
@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import datetime # for age stuff
 
 # %% [markdown] id="f03dd8de"
 # ## Initial Data Exploration
@@ -50,7 +51,7 @@ df = pd.read_csv('https://raw.githubusercontent.com/grbruns/cst383/master/sonoma
 df.info()
 
 # %% id="lNr84NVtSjtG" outputId="f2363223-5fcd-4c64-8939-4eb98d3cbf3f" colab={"base_uri": "https://localhost:8080/", "height": 714}
-df.sample(10)
+df.sample(5)
 
 
 # %% [markdown] id="K1CCaeqrSsuf"
@@ -59,73 +60,160 @@ df.sample(10)
 # %% [markdown] id="5clMunrXW8SN"
 # Below are the functions to help create a new column to get the color shade of the animals
 
-# %% id="olpOT58oT0WN"
-# Function to get primary color from a color string
-def get_primary_color(color):
-    if pd.isnull(color):
-        return 'unknown'
-    return color.split('/')[0].strip().lower()
+# %% [markdown]
+# Function to clean and normalize breeds
 
-# Helper function to check if primary color is in a given list, maybe not necessary but cleaner?
-def primary_color_in_list(primary_color, shades_list):
-    return any(shade in primary_color for shade in shades_list)
+# %% [markdown]
+# ### Functions and expressions to pre-process data
 
-# Function to categorize color into Light, Medium, Dark, or Other shades
-def categorize_shade(color):
-    if pd.isna(color):
-        return 'Unknown'
+# %%
+# Function to extract primary breed
+def get_primary_breed(breed_string):
+    if pd.isna(breed_string):
+        return "Unknown"
+    
+    breed_string = str(breed_string).strip()
+    
+    # For breeds with "MIX" or similar suffix
+    if 'MIX' in breed_string: # If mix is the primary 'breed'
+        return breed_string.replace('MIX', '').strip()
 
-    primary_color = get_primary_color(color)
-    # mappings, might play around with these more...
-    dark_shades = ['black', 'brown', 'brindle', 'blue', 'gray', 'chocolate', 'seal']
-    medium_shades = ['tan', 'red', 'gold', 'fawn', 'sable', 'yellow', 'orange']
-    light_shades = ['white', 'cream', 'buff']
+    if '/' in breed_string:
+        return breed_string.split('/')[0].strip() 
+        
+    return breed_string
 
-    if primary_color_in_list(primary_color, dark_shades):
-        return 'Dark'
-    elif primary_color_in_list(primary_color, medium_shades):
-        return 'Medium'
-    elif primary_color_in_list(primary_color, light_shades):
-        return 'Light'
-    else:
-        return 'Other'
+# Function to extract primary breed and treat any compund mix as just 'MIX'
+def get_primary_breed_mix(breed_string):
+    if pd.isna(breed_string):
+        return "Unknown"
+
+    if 'mix' in breed_string.lower():
+        return 'MIX' # Treat mixes and compund mixes as just 'MIX'
+    
+    breed_string = str(breed_string).strip()
+
+    if '/' in breed_string:
+        return breed_string.split('/')[0].strip()  # else return the primary 'breed'
+    
+    return breed_string
+
+# Function to calculate age in years using 'MM/DD/YYYY'
+def calculate_age(dob_str):
+    try:
+        if pd.isna(dob_str) or dob_str == "":
+            return np.nan
+        dob = datetime.strptime(dob_str, '%m/%d/%Y')
+        age_in_years = (current_date - dob).days / 365.25
+        return age_in_years
+    except:
+        return np.nan
 
 
 
-# %% [markdown] id="SOMAFVapXsnL"
-# Applying filter to create column
+# %% [markdown]
+# ## New Filtered columns
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="86v1ug83Xu0k" outputId="edd3ad89-8330-4369-8e69-8438d4174ff1"
-dogs_returned = df[
-    (df['Type'] == 'DOG') &
-    (df['Outcome Type'].str.upper() == 'RETURN TO OWNER')
-].copy()
+# %%
+       
+# ------- Columns/Filters for Breed and Days in Shelter Analysis ----------
 
-# Create 'Primary Color' column
-dogs_returned['Primary Color'] = dogs_returned['Color'].apply(get_primary_color)
+# Create a new column for primary breed and primary breed with mix generalization
+df['PrimaryBreed'] = df['Breed'].apply(get_primary_breed)
+df['PrimaryBreedMix'] = df['Breed'].apply(get_primary_breed_mix)
 
-# Create 'Primary Shade' column correctly
-dogs_returned['Primary Shade'] = dogs_returned['Primary Color'].apply(categorize_shade)
+# Separate dogs and cats
+dog_df = df[df['Type'] == 'DOG']
+cat_df = df[df['Type'] == 'CAT']
 
-# just sampling to check if things look about right
-print(dogs_returned[['Name', 'Color', 'Primary Color', 'Primary Shade']].head(10))
+# Count the most common dog breeds
+dog_breed_counts = dog_df['PrimaryBreed'].value_counts()
+most_common_dog_breeds = dog_breed_counts.head(10).index.tolist()
 
+dog_breed_counts_mix = dog_df['PrimaryBreedMix'].value_counts()
+most_common_dog_breeds_mix = dog_breed_counts_mix.head(10).index.tolist()
+
+
+# Get average days for most common dog breeds
+dog_breed_days = dog_df[dog_df['PrimaryBreed'].isin(most_common_dog_breeds)]
+dog_avg_days = dog_breed_days.groupby('PrimaryBreed')['Days in Shelter'].mean().reindex(most_common_dog_breeds)
+
+dog_breed_days_mix = dog_df[dog_df['PrimaryBreedMix'].isin(most_common_dog_breeds_mix)]
+dog_avg_days_mix = dog_breed_days_mix.groupby('PrimaryBreedMix')['Days in Shelter'].mean().reindex(most_common_dog_breeds_mix)
+
+# Count the most common cat breeds
+cat_breed_counts = cat_df['PrimaryBreed'].value_counts()
+most_common_cat_breeds = cat_breed_counts.head(10).index.tolist()
+
+# Get average days for most common cat breeds
+cat_breed_days = cat_df[cat_df['PrimaryBreed'].isin(most_common_cat_breeds)]
+cat_avg_days = cat_breed_days.groupby('PrimaryBreed')['Days in Shelter'].mean().reindex(most_common_cat_breeds)
+
+
+# %%
+# ------- Columns/Filters for Age and Days in Shelter Analysis ----------
+
+# Calculate age and filter to ge tonly VALID records for dogs and cats
+df['Age'] = df['Date Of Birth'].apply(calculate_age)
+animals_df = df.dropna(subset=['Age', 'Days in Shelter'])
+animals_df = animals_df[animals_df['Type'].isin(['DOG', 'CAT'])]
+
+
+# %% [markdown]
+# ### Effects of Breed on Days in Shelter for Dog and Cats
+
+# %%
+# Plot 1.1: Most Common Dog breeds by average days in shelter
+sorted_dog_avg_days = dog_avg_days.sort_values(ascending=False)
+
+# plt.figure(figsize=(12, 6))
+plt.bar(dog_avg_days.index, sorted_dog_avg_days.values, width=0.6)
+plt.title('Average Days in Shelter for Most Common Dog Breeds')
+plt.xlabel('breed')
+plt.xticks(rotation=45) 
+plt.ylabel('average days')
+plt.tight_layout()
+plt.savefig('common_dog_breeds_avg_stay.png')
+plt.show()
+
+
+# %%
+# Plot 1.2: Most Common Dog breeds by average days in shelter, generalizing mixed breeds
+sorted_dog_avg_days_mix = dog_avg_days_mix.sort_values(ascending=False)
+
+plt.bar(dog_avg_days_mix.index, sorted_dog_avg_days_mix.values, width=0.6)
+plt.title('Average Days in Shelter for Most Common Dog Breeds')
+plt.xlabel('breed')
+plt.xticks(rotation=45) 
+plt.ylabel('average days')
+plt.tight_layout()
+plt.savefig('common_dog_breeds_avg_stay.png')
+plt.show()
+
+# %%
+# Plot 2: Most Common Cat breeds by average days in shelter
+sorted_cat_avg_days = cat_avg_days.sort_values(ascending=False)
+
+plt.bar(cat_avg_days.index, sorted_cat_avg_days.values)
+plt.title('Average Days in Shelter for Most Common Cat Breeds')
+plt.xlabel('breed')
+plt.xticks(rotation=45, ha='right') 
+plt.ylabel('average days')
+
+# adding count labels -  I think it is important to show this in the cat scenario since there's some low 'n' values
+for i, breed in enumerate(sorted_cat_avg_days.index):
+    plt.text(i, sorted_cat_avg_days[breed] + 0.5, f"n={cat_breed_counts[breed]}", ha='center')
+
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ### Effects of Age and Days in Shelter
+
+# %%
 
 # %% [markdown] id="5a3a9d08"
 # ## Data exploration and visualization
-
-# %% [markdown] id="QOJShgqBU5m-"
-# Exploring data from primary color column
-
-# %% colab={"base_uri": "https://localhost:8080/", "height": 513} id="QR9EFrXnU-13" outputId="cad25fca-e367-485d-90dc-ff2a33182fb5"
-# Plot the shade distribution
-shade_counts = dogs_returned['Primary Shade'].value_counts()
-shade_counts.plot(kind='bar')
-
-plt.title('Distribution of Coat Shades for Dogs Returned to Owners')
-plt.xlabel('Shade Category')
-plt.ylabel('Number of Dogs')
-plt.show()
 
 # %% [markdown] id="oswY20dtVAhI"
 # Data above looks good(at least we can see the relative primary colors), but doesn't give us the full picture, maybe there's just more black dogs. Let's explore some more. Out of all dogs of a given shade, what's the proportion successfully returned to their owner?
@@ -135,3 +223,9 @@ plt.show()
 
 # %% [markdown] id="gczUjeHafqXM"
 # For now we still need to explore more and improve the notebook. As it stands it's pretty messy but we just wanted to explore as much as we could first and see if we found anything of interest or significance rather than caring too much about form. As we hone down on our areas of interest we will make the data look better and have better descriptions and organization. Lastly exploring the effects of color might be more interesting(given our exploration) so we might pivot to focus more on that.
+
+# %%
+
+# %%
+
+# %%

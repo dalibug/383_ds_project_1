@@ -4,7 +4,7 @@
   - # Animal type (dog, cat) --> DALIA
     - columns needed: "Days in Shelter" , "type"
     - multi-Boxplot for each animal type
-  - # Breed --> 1 for cat and one 1 for dog --> RAF
+  - # Breed --> 1 for cat and one 1 for dog --> RAF (DONE)
     - columns needed: "Days in Shelter" - "breed", "type"
     - multi Barplot, one bar for each breed
     - Create function to get single breed, maybe.
@@ -13,7 +13,7 @@
     - Scatter plot
     - Cleanup data(unkown DOB), maybe have to put ages in buckets and use barplot instead of scatterplot?
 
-  - # Size (should we spearate species?) separate by age(isPuppy, isKitten)? GABE
+  - # Size (should we spearate species?) separate by age(isPuppy, isKitten)? --> GABE
     - columns needed: "Days in Shelter", "Size" - kitten/puppy or not?
     - Violin or figure it out
     - might have to create new columns - isKitten/isPuppy
