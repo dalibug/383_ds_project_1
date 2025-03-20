@@ -8,9 +8,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: Python [conda env:anaconda3]
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-env-anaconda3-py
+#     name: python3
 # ---
 
 # %% [markdown] id="aab1aa45"
@@ -18,7 +18,7 @@
 # 03/15/2024
 
 # %% [markdown] id="8d17ef9f"
-# #### Rafael L.S Reis, Dalia Cabrera Hurtado, Gabe Myers
+# #### Rafael L.S Reis, Dalia Cabrera Hurtado, Gabriel Myers
 
 # %% [markdown] id="dd9d8a1b"
 # ## Introduction
@@ -129,6 +129,59 @@ plt.show()
 
 # %% [markdown] id="oswY20dtVAhI"
 # Data above looks good(at least we can see the relative primary colors), but doesn't give us the full picture, maybe there's just more black dogs. Let's explore some more. Out of all dogs of a given shade, what's the proportion successfully returned to their owner?
+
+# %% [markdown]
+# ## Size
+
+# %% [markdown]
+#  - #Size (should we spearate species?) separate by age(isPuppy, isKitten)? GABE
+#     - columns needed: "Days in Shelter", "Size" - kitten/puppy or not?
+#     - Violin or figure it out
+#     - might have to create new columns - isKitten/isPuppy
+
+# %%
+# create a new column to tell if an animal is a puppy or kitten
+df["is_puppy_kitten"] = (df["Size"] == "KITTEN") | (df["Size"] == "PUPPY")
+# create new column for log and use log1p to handle zeros
+df["Days in Shelter_log"] = np.log1p(df["Days in Shelter"]) 
+sns.violinplot(x="is_puppy_kitten", y="Days in Shelter_log", data=df)
+plt.title("Days in Shelter for Puppies and Kittens (Log-Transformed)")
+plt.xlabel("Is Puppy or Kitten")
+plt.ylabel("Days in shelter (log scale)")
+plt.show();
+
+# %% [markdown]
+# These two distributions look pretty simialar execept there is a spike close to 0 for non puppies and kittens. I think this is from peoples animals getting picked up off the street and returned to the owner.
+
+# %% [markdown]
+# ## Outcome
+
+# %% [markdown]
+# - #Outcome - "how much does each outcome stay?" --> GABE
+#     - columns needed: "Outcome Type", "Length of Stay"
+#     - Barplot
+#     - seems like clean categories 
+
+# %%
+df_group = df.groupby("Outcome Type")["Days in Shelter"].mean()
+sns.barplot(x="Outcome Type", y="Days in Shelter", df=df_group)
+plt.xlabel("Outcome Type")
+plt.ylabel("Average Days in Shelter")
+plt.title("Average Days in Shelter by Outcome Type")
+plt.xticks(rotation=45)
+plt.show()
+
+# %%
+df.groupby("Outcome Type")["Days in Shelter"].mean().sort_values(ascending=False).plot.bar()
+plt.xlabel("Outcome Type")
+plt.ylabel("Average Days in Shelter")
+plt.title("Average Days in Shelter by Outcome Type")
+plt.xticks(rotation=45)
+plt.show()
+
+# %% [markdown]
+# As we can see adopted animals stay the longest with an average of 40 days. This suggests that adoption is a proccess and takes time. I would also assume that the shelter staff are trying to find the best match possible for each dog so some people might get turned away.
+# Another interesting thing to note is how quickly animals get returned to their owner on average its about 4 days.
 
 # %% [markdown] id="05ea9473"
 # ## Conclusions
