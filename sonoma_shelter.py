@@ -245,19 +245,7 @@ plt.show();
 # ## Outcome
 
 # %% [markdown]
-# - #Outcome - "how much does each outcome stay?" --> GABE
-#     - columns needed: "Outcome Type", "Length of Stay"
-#     - Barplot
-#     - seems like clean categories 
-
-# %%
-df_group = df.groupby("Outcome Type")["Days in Shelter"].mean()
-sns.barplot(x="Outcome Type", y="Days in Shelter", df=df_group)
-plt.xlabel("Outcome Type")
-plt.ylabel("Average Days in Shelter")
-plt.title("Average Days in Shelter by Outcome Type")
-plt.xticks(rotation=45)
-plt.show()
+# I want to know how outcome type changes the duration an animal would stay. What outcome type has the longest stay on average?
 
 # %%
 df.groupby("Outcome Type")["Days in Shelter"].mean().sort_values(ascending=False).plot.bar()
@@ -276,9 +264,3 @@ plt.show()
 
 # %% [markdown] id="gczUjeHafqXM"
 # For now we still need to explore more and improve the notebook. As it stands it's pretty messy but we just wanted to explore as much as we could first and see if we found anything of interest or significance rather than caring too much about form. As we hone down on our areas of interest we will make the data look better and have better descriptions and organization. Lastly exploring the effects of color might be more interesting(given our exploration) so we might pivot to focus more on that.
-
-# %%
-
-# %%
-
-# %%
