@@ -22,9 +22,20 @@
 
 # %% [markdown] id="dd9d8a1b"
 # ## Introduction
-# This notebook aims to explore trends in animal adoption and return outcomes using the Sonoma Animal Shelter dataset. With over 30,000 records capturing detailed information on dogs, cats, and other animals—including breed, age, coat color, and length of stay—our goal is to uncover patterns that may inform shelter management practices and adoption strategies. In particular, we investigate how breed types (purebred vs. mixed) and age correlate with the duration of shelter stays. Through a series of visualizations, including bar plots, scatter plots, and a new binned analysis of age and shelter days, we aim to provide actionable insights into the dynamics that influence an animal’s journey from intake to outcome.
 #
-# This analysis seeks to answer two key questions: first, how does the number of days an animal spends in the shelter differ between those that are adopted and those that are returned to their owners; and second, is there an association between an animal's primary coat color—extracted from compound color entries—and its outcome or duration of shelter stay.
+# This notebook explores trends in animal shelter outcomes and the factors that influence how long animals remain in care, using a Sonoma County dataset with over 30,000 records. The data includes key attributes such as breed, age, sex, and length of stay for dogs, cats, and other animals.
+#
+# We investigate how animal characteristics, specifically breed type (purebred versus mixed), age, and sex—relate to shelter duration and overall outcomes. In our analysis, we examine several key aspects:
+#
+# Outcome Differences: How the number of days an animal spends in the shelter varies between those that are adopted and those that are returned to their owners.
+# Breed Influence: How breed impacts shelter stays, noting that purebred dogs tend to have shorter stays, while breeds like pit bulls, which face negative stigma, often remain longer.
+# Age Effects: How shelter duration varies with age, with older animals tending to have shorter stays,possibly due to higher euthanasia rates while younger animals may require additional time to stabilize their health before adoption.
+# Sex Associations: How subtle differences in shelter duration may be linked to the sex of the animal, influencing adoption and return outcomes.
+# This analysis seeks to, amongst smaller questions, answer two key questions:
+#
+# Outcome Comparison: How does the number of days an animal spends in the shelter differ between those that are adopted and those that are returned to their owners?
+# Characteristic Correlations: How do animal characteristics such as breed, age, and sex correlate with the length of their shelter stay?
+# By addressing these questions through a series of visualizations—including bar plots, scatter plots, and binned analyses—we aim to provide actionable insights that can inform strategies to improve adoption rates and reduce shelter overcrowding.
 #
 # data downloaded from:
 # https://raw.githubusercontent.com/grbruns/cst383/master/sonoma-shelter-15-october-2024.csv
@@ -42,27 +53,44 @@ from datetime import datetime # for age stuff
 # %% id="8694f864"
 df = pd.read_csv('https://raw.githubusercontent.com/grbruns/cst383/master/sonoma-shelter-17-march-2025.csv')
 
-# %% [markdown] id="d1283d9a"
-# ## Data preprocessing
-
 # %% id="85iYy59zSfzm" outputId="b0cffc8d-33bc-4a95-a8b7-02511d982bfc" colab={"base_uri": "https://localhost:8080/"}
 df.info()
+
+# %%
+df.describe()
 
 # %% id="lNr84NVtSjtG" outputId="f2363223-5fcd-4c64-8939-4eb98d3cbf3f" colab={"base_uri": "https://localhost:8080/", "height": 714}
 df.sample(5)
 
+# %% [markdown]
+# # Exploring some variable and graphs
 
-# %% [markdown] id="K1CCaeqrSsuf"
-# Among dogs returned to their owners, which coat colors are most frequently associated with being lost or having escaped? To try explore this, we can create a simplified color category column to analyze color hues effectively.
+# %%
+df['Type'].value_counts().plot(kind='bar')
+plt.xticks(rotation=0)
+plt.ylabel("frequency")
+plt.title("Animal Type Frequency")
+plt.show()
 
-# %% [markdown] id="5clMunrXW8SN"
-# Below are the functions to help create a new column to get the color shade of the animals
+# %%
+df['Outcome Type'].value_counts().plot(kind='bar')
+plt.xticks(rotation=45)
+plt.ylabel("frequency")
+plt.title('Outcome Types Frequency')
+
+# %%
+plt.hist(df['Days in Shelter'][df['Days in Shelter'] <= 60], rwidth=0.8)
+plt.title('Number Animals and Days in Shelter')
+plt.xlabel("days")
+plt.ylabel("frequency")
+plt.show()
+
 
 # %% [markdown]
-# Function to clean and normalize breeds
+# ## Data preprocessing
 
 # %% [markdown]
-# ### Functions and expressions to pre-process data
+# ### Functions
 
 # %%
 # Function to extract primary breed
@@ -105,7 +133,7 @@ def calculate_age(dob_str):
 current_date = datetime.today()
 
 # %% [markdown]
-# ## New Filtered columns
+# ### New Columns and Values
 
 # %%
 # ------- Columns/Filters for Breed and Days in Shelter Analysis ----------
@@ -144,30 +172,37 @@ cat_avg_days = cat_breed_days.groupby('PrimaryBreed')['Days in Shelter'].mean().
 # %%
 # # ------- Columns/Filters for Age and Days in Shelter Analysis ----------
 
-# Filter for dogs and cats only and create a copy
-df_dogs_cats = df[df['Type'].isin(['DOG', 'CAT'])].copy()
+# Calculate Age w/ Function
+df['Age'] = df['Date Of Birth'].apply(calculate_age)
 
-# Convert Date Of Birth to datetime and calculate Age
-df_dogs_cats["Date Of Birth"] = pd.to_datetime(df_dogs_cats["Date Of Birth"], errors="coerce")
-df_dogs_cats["Age"] = (datetime(2025, 3, 1) - df_dogs_cats["Date Of Birth"]).dt.days // 365
+# create an AgeBin column
+age_min = int(np.floor(df['Age'].min()))
+age_max = int(np.ceil(df['Age'].max()))
+bins = np.arange(age_min, age_max + 1, 1)
+# Use midpoints of the bins for labeling the x-axis
+age_labels = (bins[:-1] + bins[1:]) / 2
 
-# Define age bins and corresponding labels for valid ages
-bins = [0, 0.5, 1, 2, 5, 10, 20]
-labels = ['0-0.5', '0.5-1yr', '1-2', '2-5', '5-10', '10+']
+# Create a new column with binned ages
+df['AgeBin'] = pd.cut(df['Age'], bins=bins, labels=age_labels, include_lowest=True)
 
-# Create Age Group column using pd.cut
-df_dogs_cats['Age Group'] = pd.cut(df_dogs_cats['Age'], bins=bins, labels=labels, right=False)
+#Filter for Cats and Dogs Only
+df_animals = df.copy()
+filtered_df = df_animals[df_animals['Type'].isin(['CAT', 'DOG'])]
 
-# Add an "Unknown" category and assign it to rows where Age is missing
-df_dogs_cats['Age Group'] = df_dogs_cats['Age Group'].cat.add_categories("Unknown")
-df_dogs_cats.loc[df_dogs_cats['Age'].isna(), 'Age Group'] = "Unknown"
+# Group by AgeBin to Compute Average Days in Shelter
+combined_avg_days = filtered_df.groupby('AgeBin', observed=False)['Days in Shelter'].mean().reset_index() # warning told me to set observed to false?
 
-# Calculate average Days in Shelter per Age Group (including the Unknown bin)
-age_days_avg = df_dogs_cats.groupby('Age Group', observed=False)['Days in Shelter'].mean()
+combined_avg_days['AgeBin'] = combined_avg_days['AgeBin']
+combined_avg_days = combined_avg_days.sort_values('AgeBin')
 
+# %% [markdown]
+# ## Data exploration and visualization.
 
 # %% [markdown]
 # ### Effects of Breed on Days in Shelter for Dog and Cats
+
+# %% [markdown]
+# The question we wish to answer is if there's adoption or retrieval biases towards certain breeds. 
 
 # %%
 # Plot 1.1: Most Common Dog breeds by average days in shelter
@@ -182,7 +217,7 @@ plt.show()
 
 
 # %% [markdown]
-# In the graph above, we observe that certain breeds such as Poodles, Australian Cattle Dogs, and Rottweilers tend to have shorter shelter stays. This is expected given their popularity and the higher likelihood of them being runaways, as it is rare to find these breeds as strays. For mixed-breed dogs, we designate the primary breed as the first one listed (i.e., the dominant breed). Notably, Pitbulls exhibit significantly longer shelter stays compared to other breeds. As we will explore further, this trend may be due to several factors, including the high likelihood that many Pitbulls are mixed breeds and the challenges associated with owning them.
+# In the graph above, we observe that certain breeds such as Poodles, Australian Cattle Dogs, and Rottweilers tend to have shorter shelter stays. This is probably due their popularity and the higher likelihood of them being runaways, as it is rare to find these breeds as strays. For mixed-breed dogs, we designate the primary breed as the first one listed (i.e., the dominant breed). Notably, Pitbulls exhibit significantly longer shelter stays compared to other breeds. As we will explore further in the graph below, this trend may be due to several factors, including the high likelihood that many Pitbulls are mixed breeds and the challenges associated with owning them.
 
 # %%
 # Plot 1.2: Most Common Dog breeds by average days in shelter, generalizing mixed breeds
@@ -216,26 +251,30 @@ for i, breed in enumerate(sorted_cat_avg_days.index):
 plt.show()
 
 # %% [markdown]
-# ## Effects of Age and Days in Shelter
+# Although some cat breeds have low sample sizes, which may affect reliability, the analysis suggests that domestic breeds refferring to undefined or mixed breeds (sometimes labeled as 'Siamese' based on coloration rather than true lineage)tend to have a slightly higher average number of days in the shelter than rarer, more defined breeds like Persians. This discrepancy might be influenced by the possibility that Persians, Himalayans, and Manxes are more likely to be runaways, as these breeds are not typically common street cats.
 
 # %% [markdown]
-# ### Binned Analysis of Age and Days in Shelter
-# In order to further explore the relationship between an animal's age and its time spent in the shelter, we can analyze the data using age buckets and corresponding ranges of shelter days. The following plot shows a 2D histogram that bins the animals by age and shelter day providing a clearer picture of how specific age groups relate to the length of shelter stays.
+# Overall, the data suggest that undefined and mixed breeds tend to remain in shelters longer, although this trend is less pronounced among cats. This may be because these animals are often perceived as less desirable, whereas purebreds are more likely to have an owner or, if unowned, are considered more attractive for adoption.
+
+# %% [markdown]
+# ### Effects of Age and Days in Shelter
+
+# %% [markdown]
+# In order to further explore the relationship between an animal's age and its time spent in the shelter. The question we want to answer here is, do certain age ranges stay longer and if so why?
 
 # %%
-age_days_avg.plot(kind='bar')
-plt.title("Average Days in Shelter by Age Group (Dogs and Cats)")
-plt.xlabel("age group")
-plt.ylabel("average days in shelter")
-plt.tight_layout()
-plt.xticks(rotation=0, ha='right') 
+
+plt.bar(combined_avg_days['AgeBin'], combined_avg_days['Days in Shelter'])
+plt.xlabel('age (years)')
+plt.ylabel('average days in shelter')
+plt.title('Average Days in Shelter by Age (Cats and Dogs Combined)')
 plt.show()
 
 # %% [markdown] id="oswY20dtVAhI"
-# Data above looks good(at least we can see the relative primary colors), but doesn't give us the full picture, maybe there's just more black dogs. Let's explore some more. Out of all dogs of a given shade, what's the proportion successfully returned to their owner?
+# Overall, the graph indicates a clear trend, older cats and dogs tend to spend less time in the shelter. One possible explanation for this pattern is that older animals may be more likely to be euthanized if they are not adopted, which shortens their shelter stay. Conversely, younger animals remain in the shelter longer, possibly because there are simply more individuals in these age ranges and very young animals may require extra time to stabilize their health before being adopted.
 
 # %% [markdown]
-# ## Size
+# ### Effects of Size and Days in Shelter
 
 # %%
 # create a new column to tell if an animal is a puppy or kitten
@@ -252,7 +291,7 @@ plt.show();
 # These two distributions look pretty simialar execept there is a spike close to 0 for non puppies and kittens. I think this is from peoples animals getting picked up off the street and returned to the owner.
 
 # %% [markdown]
-# ## Outcome
+# Outcome:
 
 # %% [markdown]
 # I want to know how outcome type changes the duration an animal would stay. What outcome type has the longest stay on average?
@@ -269,14 +308,8 @@ plt.show()
 # As we can see adopted animals stay the longest with an average of 40 days. This suggests that adoption is a proccess and takes time. I would also assume that the shelter staff are trying to find the best match possible for each dog so some people might get turned away.
 # Another interesting thing to note is how quickly animals get returned to their owner on average its about 4 days.
 
-# %% [markdown] id="05ea9473"
-# ## Conclusions
-
-# %% [markdown] id="gczUjeHafqXM"
-# For now we still need to explore more and improve the notebook. As it stands it's pretty messy but we just wanted to explore as much as we could first and see if we found anything of interest or significance rather than caring too much about form. As we hone down on our areas of interest we will make the data look better and have better descriptions and organization. Lastly exploring the effects of color might be more interesting(given our exploration) so we might pivot to focus more on that.
-
 # %% [markdown]
-# Days in shelter as it relates to animal type.
+# ### Days in shelter as it relates to animal type.
 
 # %%
 df_filtered = df[df['Type'].str.lower() != 'other']
@@ -290,7 +323,11 @@ plt.suptitle('')
 plt.show();
 
 # %% [markdown]
-# ## Days in shelter as it relates to sex and animal type.
+# The “Days in Shelter by Animal Type” plot tells us that the majority of animals stay 1 - 30 days.
+# This plot didn’t provide any significant findings but it is interesting that dogs have a median stay of around 8 days while cats have a slightly higher stay of 10 days. There were a lot of outliers in the dataset which can bring interesting questions like why are these animals staying for such lengths?
+
+# %% [markdown]
+# ### Days in shelter as it relates to sex and animal type.
 
 # %%
 df = df[df['Type'].str.lower().isin(['cat', 'dog'])]
@@ -340,4 +377,17 @@ plt.suptitle('')
 plt.tight_layout()
 plt.show()
 
-# %%
+# %% [markdown]
+# The “Days in Shelter by Sex” plots shows that both female cats and dogs have a slightly higher median stay than male cats and dogs. This leads me to believe that sex of the animal might have an association to role in shelter duration. Female cats have the highest median stay followed by female dogs. Both male cats and dogs have similar median stays.
+
+# %% [markdown]
+# ## Conclusion
+
+# %% [markdown]
+# Our analysis of Sonoma County animal shelter data revealed significant differences in the length of stay for animals based on breed, outcome, and age. Purebred dogs like poodles, Australian cattle dogs, and border collies tended to have the shortest stays, likely because their breeds are perceived as more valuable and have a higher chance of being recovered as runaway pets. In contrast, pit bulls experienced the longest average stays, possibly due to negative stigma and their common presence as strays. These examples clearly demonstrate that breed plays a significant role in determining shelter duration.
+#
+# We also observed a clear distinction in stay duration based on outcome. Animals returned to their owners had the shortest shelter stays, likely because their owners were actively searching for them, while animals that were eventually adopted had the longest average stays, reflecting the longer process required to secure a new home.
+#
+# In addition, our analysis of age revealed a distinct trend: older cats and dogs tend to spend less time in the shelter. One possible explanation is that older animals, especially dogs, might be more likely to be euthanized if they are not adopted, whereas younger animals remain longer, perhaps due to their higher numbers and the additional time needed to stabilize their health before adoption.
+#
+# Overall, our findings also suggest that adopter preferences regarding sex and physical appearance, though sometimes subtle, further influence shelter stay durations. Animals perceived as less desirable tend to remain in the shelter longer when they are young, while older individuals in these categories may experience shorter stays. These insights provide valuable guidance for developing strategies to improve adoption rates and reduce shelter overcrowding, possibly rasing awareness on pets considered less desirable.
