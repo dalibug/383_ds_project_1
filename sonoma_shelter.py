@@ -22,11 +22,9 @@
 
 # %% [markdown] id="dd9d8a1b"
 # ## Introduction
-# The Sonoma Animal Shelter dataset, provided by the County of Sonoma Department of Health Services, comprises about 30,000 records detailing various attributes of animals admitted to the shelter. Each record includes species, breed, age, sex, and color, along with intake and outcome types to track the animals journey in the shelter. With over 4,000 animals entering the shelter annually, the dataset offers insights into adoption trends, shelter capacity, and animal welfare efforts. It gets updated regularly with the most recent being March 18, 2025.
+# This notebook aims to explore trends in animal adoption and return outcomes using the Sonoma Animal Shelter dataset. With over 30,000 records capturing detailed information on dogs, cats, and other animals—including breed, age, coat color, and length of stay—our goal is to uncover patterns that may inform shelter management practices and adoption strategies. In particular, we investigate how breed types (purebred vs. mixed) and age correlate with the duration of shelter stays. Through a series of visualizations, including bar plots, scatter plots, and a new binned analysis of age and shelter days, we aim to provide actionable insights into the dynamics that influence an animal’s journey from intake to outcome.
 #
 # This analysis seeks to answer two key questions: first, how does the number of days an animal spends in the shelter differ between those that are adopted and those that are returned to their owners; and second, is there an association between an animal's primary coat color—extracted from compound color entries—and its outcome or duration of shelter stay.
-#
-# note: This is tentative and we will likely hone down our scope of questionings(likely to colors)
 #
 # data downloaded from:
 # https://raw.githubusercontent.com/grbruns/cst383/master/sonoma-shelter-15-october-2024.csv
@@ -73,30 +71,24 @@ def get_primary_breed(breed_string):
         return "Unknown"
     
     breed_string = str(breed_string).strip()
+
+    if '/' in breed_string:
+        return breed_string.split('/')[0].strip() 
     
     # For breeds with "MIX" or similar suffix
     if 'MIX' in breed_string: # If mix is the primary 'breed'
         return breed_string.replace('MIX', '').strip()
-
-    if '/' in breed_string:
-        return breed_string.split('/')[0].strip() 
-        
+   
     return breed_string
 
-# Function to extract primary breed and treat any compund mix as just 'MIX'
+# Function to extract primary breed and treat any compound mix as just 'MIX'
 def get_primary_breed_mix(breed_string):
     if pd.isna(breed_string):
         return "Unknown"
-
-    if 'mix' in breed_string.lower():
-        return 'MIX' # Treat mixes and compund mixes as just 'MIX'
     
-    breed_string = str(breed_string).strip()
-
-    if '/' in breed_string:
-        return breed_string.split('/')[0].strip()  # else return the primary 'breed'
+    breed = str(breed_string).strip()
     
-    return breed_string
+    return 'MIX' if ('MIX' in breed or '/' in breed) else breed
 
 # Function to calculate age in years using 'MM/DD/YYYY'
 def calculate_age(dob_str):
@@ -104,18 +96,18 @@ def calculate_age(dob_str):
         if pd.isna(dob_str) or dob_str == "":
             return np.nan
         dob = datetime.strptime(dob_str, '%m/%d/%Y')
-        age_in_years = (current_date - dob).days / 365.25
+        age_in_years = (current_date - dob).days / 365
         return age_in_years
     except:
         return np.nan
 
-
+# Set a current date for age calculations
+current_date = datetime.today()
 
 # %% [markdown]
 # ## New Filtered columns
 
 # %%
-       
 # ------- Columns/Filters for Breed and Days in Shelter Analysis ----------
 
 # Create a new column for primary breed and primary breed with mix generalization
@@ -123,8 +115,8 @@ df['PrimaryBreed'] = df['Breed'].apply(get_primary_breed)
 df['PrimaryBreedMix'] = df['Breed'].apply(get_primary_breed_mix)
 
 # Separate dogs and cats
-dog_df = df[df['Type'] == 'DOG']
-cat_df = df[df['Type'] == 'CAT']
+dog_df = df[df['Type'] == 'DOG'].copy()
+cat_df = df[df['Type'] == 'CAT'].copy()
 
 # Count the most common dog breeds
 dog_breed_counts = dog_df['PrimaryBreed'].value_counts()
@@ -132,7 +124,6 @@ most_common_dog_breeds = dog_breed_counts.head(10).index.tolist()
 
 dog_breed_counts_mix = dog_df['PrimaryBreedMix'].value_counts()
 most_common_dog_breeds_mix = dog_breed_counts_mix.head(10).index.tolist()
-
 
 # Get average days for most common dog breeds
 dog_breed_days = dog_df[dog_df['PrimaryBreed'].isin(most_common_dog_breeds)]
@@ -151,12 +142,28 @@ cat_avg_days = cat_breed_days.groupby('PrimaryBreed')['Days in Shelter'].mean().
 
 
 # %%
-# ------- Columns/Filters for Age and Days in Shelter Analysis ----------
+# # ------- Columns/Filters for Age and Days in Shelter Analysis ----------
 
-# Calculate age and filter to ge tonly VALID records for dogs and cats
-df['Age'] = df['Date Of Birth'].apply(calculate_age)
-animals_df = df.dropna(subset=['Age', 'Days in Shelter'])
-animals_df = animals_df[animals_df['Type'].isin(['DOG', 'CAT'])]
+# Filter for dogs and cats only and create a copy
+df_dogs_cats = df[df['Type'].isin(['DOG', 'CAT'])].copy()
+
+# Convert Date Of Birth to datetime and calculate Age
+df_dogs_cats["Date Of Birth"] = pd.to_datetime(df_dogs_cats["Date Of Birth"], errors="coerce")
+df_dogs_cats["Age"] = (datetime(2025, 3, 1) - df_dogs_cats["Date Of Birth"]).dt.days // 365
+
+# Define age bins and corresponding labels for valid ages
+bins = [0, 0.5, 1, 2, 5, 10, 20]
+labels = ['0-0.5', '0.5-1yr', '1-2', '2-5', '5-10', '10+']
+
+# Create Age Group column using pd.cut
+df_dogs_cats['Age Group'] = pd.cut(df_dogs_cats['Age'], bins=bins, labels=labels, right=False)
+
+# Add an "Unknown" category and assign it to rows where Age is missing
+df_dogs_cats['Age Group'] = df_dogs_cats['Age Group'].cat.add_categories("Unknown")
+df_dogs_cats.loc[df_dogs_cats['Age'].isna(), 'Age Group'] = "Unknown"
+
+# Calculate average Days in Shelter per Age Group (including the Unknown bin)
+age_days_avg = df_dogs_cats.groupby('Age Group', observed=False)['Days in Shelter'].mean()
 
 
 # %% [markdown]
@@ -166,66 +173,69 @@ animals_df = animals_df[animals_df['Type'].isin(['DOG', 'CAT'])]
 # Plot 1.1: Most Common Dog breeds by average days in shelter
 sorted_dog_avg_days = dog_avg_days.sort_values(ascending=False)
 
-# plt.figure(figsize=(12, 6))
 plt.bar(dog_avg_days.index, sorted_dog_avg_days.values, width=0.6)
 plt.title('Average Days in Shelter for Most Common Dog Breeds')
-plt.xlabel('breed')
+plt.xlabel('Breed')
 plt.xticks(rotation=45) 
-plt.ylabel('average days')
-plt.tight_layout()
-plt.savefig('common_dog_breeds_avg_stay.png')
+plt.ylabel('Average Days')
 plt.show()
 
+
+# %% [markdown]
+# In the graph above, we observe that certain breeds such as Poodles, Australian Cattle Dogs, and Rottweilers tend to have shorter shelter stays. This is expected given their popularity and the higher likelihood of them being runaways, as it is rare to find these breeds as strays. For mixed-breed dogs, we designate the primary breed as the first one listed (i.e., the dominant breed). Notably, Pitbulls exhibit significantly longer shelter stays compared to other breeds. As we will explore further, this trend may be due to several factors, including the high likelihood that many Pitbulls are mixed breeds and the challenges associated with owning them.
 
 # %%
 # Plot 1.2: Most Common Dog breeds by average days in shelter, generalizing mixed breeds
 sorted_dog_avg_days_mix = dog_avg_days_mix.sort_values(ascending=False)
 
 plt.bar(dog_avg_days_mix.index, sorted_dog_avg_days_mix.values, width=0.6)
-plt.title('Average Days in Shelter for Most Common Dog Breeds')
-plt.xlabel('breed')
+plt.title('Average Days in Shelter for Most Common Dog Breeds (Mixed Generalized)')
+plt.xlabel('Breed')
 plt.xticks(rotation=45) 
-plt.ylabel('average days')
-plt.tight_layout()
-plt.savefig('common_dog_breeds_avg_stay.png')
+plt.ylabel('Average Days')
 plt.show()
+
+# %% [markdown]
+# On the graph above, we made a wide generalization for mixed breeds. We revised our filtering system so that any animal labeled as mixed or with more than one breed is classified as 'MIX'. With this update, the data presents a more accurate picture. Notably, while Pitbulls now show a shorter stay than before, they still remain in the shelter longer than most purebreds—likely reflecting the challenges associated with owning a breed that often faces public stigma. Mixed breed dogs, however, continue to stay much longer. This trend likely stems from persistent biases since many potential adopters still view mixed breeds as having unpredictable temperaments or uncertain health histories, even though mixed breeds can benefit from greater genetic diversity and fewer inherited issues.
 
 # %%
 # Plot 2: Most Common Cat breeds by average days in shelter
 sorted_cat_avg_days = cat_avg_days.sort_values(ascending=False)
 
+plt.figure(figsize=(12, 4))
 plt.bar(cat_avg_days.index, sorted_cat_avg_days.values)
 plt.title('Average Days in Shelter for Most Common Cat Breeds')
-plt.xlabel('breed')
+plt.xlabel('Breed')
 plt.xticks(rotation=45, ha='right') 
-plt.ylabel('average days')
+plt.ylabel('Average Days')
 
-# adding count labels -  I think it is important to show this in the cat scenario since there's some low 'n' values
+# adding count labels -  I think it is important to show this in the cat scenario since there's some low \'n\' values
 for i, breed in enumerate(sorted_cat_avg_days.index):
-    plt.text(i, sorted_cat_avg_days[breed] + 0.5, f"n={cat_breed_counts[breed]}", ha='center')
+    plt.text(i, sorted_cat_avg_days[breed] + 0.25, f"n={cat_breed_counts[breed]}", ha='center')
 
-plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ### Effects of Age and Days in Shelter
+# ## Effects of Age and Days in Shelter
+
+# %% [markdown]
+# ### Binned Analysis of Age and Days in Shelter
+# In order to further explore the relationship between an animal's age and its time spent in the shelter, we can analyze the data using age buckets and corresponding ranges of shelter days. The following plot shows a 2D histogram that bins the animals by age and shelter day providing a clearer picture of how specific age groups relate to the length of shelter stays.
 
 # %%
-
-# %% [markdown] id="5a3a9d08"
-# ## Data exploration and visualization
+age_days_avg.plot(kind='bar')
+plt.title("Average Days in Shelter by Age Group (Dogs and Cats)")
+plt.xlabel("age group")
+plt.ylabel("average days in shelter")
+plt.tight_layout()
+plt.xticks(rotation=0, ha='right') 
+plt.show()
 
 # %% [markdown] id="oswY20dtVAhI"
 # Data above looks good(at least we can see the relative primary colors), but doesn't give us the full picture, maybe there's just more black dogs. Let's explore some more. Out of all dogs of a given shade, what's the proportion successfully returned to their owner?
 
 # %% [markdown]
 # ## Size
-
-# %% [markdown]
-#  - #Size (should we spearate species?) separate by age(isPuppy, isKitten)? GABE
-#     - columns needed: "Days in Shelter", "Size" - kitten/puppy or not?
-#     - Violin or figure it out
-#     - might have to create new columns - isKitten/isPuppy
 
 # %%
 # create a new column to tell if an animal is a puppy or kitten
