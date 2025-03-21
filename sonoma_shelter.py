@@ -264,3 +264,70 @@ plt.show()
 
 # %% [markdown] id="gczUjeHafqXM"
 # For now we still need to explore more and improve the notebook. As it stands it's pretty messy but we just wanted to explore as much as we could first and see if we found anything of interest or significance rather than caring too much about form. As we hone down on our areas of interest we will make the data look better and have better descriptions and organization. Lastly exploring the effects of color might be more interesting(given our exploration) so we might pivot to focus more on that.
+
+# %% [markdown]
+# Days in shelter as it relates to animal type.
+
+# %%
+df_filtered = df[df['Type'].str.lower() != 'other']
+flierprops = dict(marker='o', markersize=4,alpha=0.3, markerfacecolor ='none')
+df_filtered.boxplot(column='Days in Shelter', by='Type', figsize=(5,6), flierprops=flierprops)
+plt.yscale('log')  # Use log scale for skewed data
+plt.ylim(0, 10**3)
+plt.ylabel('Days in Shelter (log scale)')
+plt.title('Days in Shelter by Animal Type')
+plt.suptitle('')
+plt.show();
+
+# %% [markdown]
+# ## Days in shelter as it relates to sex and animal type.
+
+# %%
+df = df[df['Type'].str.lower().isin(['cat', 'dog'])]
+
+df['sex_binary'] = df['Sex'].apply(
+    lambda s: 0 if ('female' in s.lower() or 'spay' in s.lower()) else 1
+)
+flierprops = dict(
+    marker='o',
+    markersize=3,
+    markerfacecolor='none',
+    alpha=0.4,
+)
+
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,6), sharey=True)
+
+df_cat = df[df['Type'].str.lower() == 'cat']
+df_cat.boxplot(
+    column='Days in Shelter',
+    by='sex_binary',
+    ax=axes[0],
+    flierprops=flierprops
+)
+
+axes[0].set_yscale('log')
+axes[0].set_ylim(0, 10**3)
+axes[0].set_title('CAT: Days in Shelter by Sex')
+axes[0].set_xlabel('Sex')
+axes[0].set_ylabel('Days in Shelter (log scale)')
+axes[0].set_xticklabels(['Female', 'Male'])
+
+df_dog = df[df['Type'].str.lower() == 'dog']
+df_dog.boxplot(
+    column='Days in Shelter',
+    by='sex_binary',
+    ax=axes[1],
+    flierprops=flierprops
+)
+
+axes[1].set_yscale('log')
+axes[1].set_ylim(0, 10**3)
+axes[1].set_title('DOG: Days in Shelter by Sex')
+axes[1].set_xlabel('Sex')
+axes[1].set_ylabel('')
+axes[1].set_xticklabels(['Female', 'Male'])
+plt.suptitle('')
+plt.tight_layout()
+plt.show()
+
+# %%
